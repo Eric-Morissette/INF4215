@@ -1,6 +1,9 @@
 import math
 import sys
 
+def distanceBetween(pos1, pos2):
+	return math.sqrt(pow(pos1[0] - pos2[0], 2) + pow(pos1[1] - pos2[1], 2))
+
 class Antenna:
 	def __init__(self, position, costPerAntenna, costPerDistance):
 		self.position = position
@@ -32,12 +35,39 @@ class Antenna:
 		self.poles.remove(polePosition)
 		self.recalculatePosition()
 
+	def simulateRadius(self, positions):
+		xMax = -sys.maxint
+		yMax = -sys.maxint
+		xMin = sys.maxint
+		yMin = sys.maxint
+		for i in positions:
+			xMax = max(xMax, i[0])
+			xMin = min(xMin, i[0])
+			yMax = max(yMax, i[1])
+			yMin = min(yMin, i[1])
+		positionTemp = (xMin + ((xMax-xMin)/2), yMin + ((yMax-yMin)/2))
+
+		maxDist = -1
+		for i in positions:
+			maxDist = max(maxDist, distanceBetween(positionTemp, i))
+		return maxDist
+
+	def canAddPole(self, polePosition):
+		polesList = list(self.poles)
+		polesList.append(polePosition)
+		return (self.simulateRadius(polesList) < self.rMax)
+
 	def distanceTo(self, position):
 		return math.sqrt(pow(self.position[0] - position[0], 2) + pow(self.position[1] - position[1], 2))
 
 	def mergeAntenna(self, antenna):
 		self.poles.extend(antenna.poles)
 		self.recalculatePosition()
+
+	def canMergeAntenna(self, antenna2):
+		polesList = list(self.poles)
+		polesList.extend(list(antenna2.poles))
+		return (self.simulateRadius(polesList) <= self.rMax)
 
 	def isOverlapping(self, antenna):
 		# Si la somme des rayons est plus grande que la distance, 
