@@ -47,6 +47,8 @@ class Antenna:
 		# alors on a un triangle avec dist - r1 - r2 et on overlap
 		return (self.rMax + antenna.rMax) >= self.distanceTo(antenna.position)
 
+	#Fonction utile en fin de recherche afin de minimiser la taille des antennes tout en restant une solution valide
+	#utile puisqu'on place les antennes avec un rayon rMax, qui représente la distance optimale en terme de cout
 	def shrinkRange(self):
 		tempRange = 1
 		for i in range(0, len(self.poles)):
