@@ -5,7 +5,7 @@ class Antenna:
 	def __init__(self, position, costPerAntenna, costPerDistance):
 		self.position = position
 		# Start rMax at the maximal "worth" distance and shrink later
-		self.rMax = 1 + math.sqrt(costPerAntenna / costPerDistance)
+		self.rMax = math.ceil(math.sqrt(costPerAntenna / costPerDistance))
 		self.k = costPerAntenna
 		self.c = costPerDistance
 		self.poles = []
@@ -35,9 +35,6 @@ class Antenna:
 	def distanceTo(self, position):
 		return math.sqrt(pow(self.position[0] - position[0], 2) + pow(self.position[1] - position[1], 2))
 
-	def calculateLinkCost(self, polePosition, c):
-		return c * distance(polePosition)
-
 	def mergeAntenna(self, antenna):
 		self.poles.extend(antenna.poles)
 		self.recalculatePosition()
@@ -54,7 +51,10 @@ class Antenna:
 		for i in range(0, len(self.poles)):
 			tempRange = max(tempRange, self.distanceTo(self.poles[i]))
 		if tempRange < self.rMax:
-			self.rMax = tempRange
+			self.rMax = math.ceil(tempRange)
 
 	def printData(self):
 		print(str('Position: ' + str(self.position) + ', range: ' + str(self.rMax)))
+
+	def calculateCost(self):
+		return(self.k + self.c*(self.rMax * self.rMax))

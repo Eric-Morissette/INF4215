@@ -2,12 +2,13 @@ import antenna
 import sys
 
 def search(Positions, k, c):
+	poles = list(Positions)
 
 	# Add an antenna on the first pole
 	antennas = []
-	antennas.append(antenna.Antenna(Positions[0], k, c))
+	antennas.append(antenna.Antenna(poles[0], k, c))
+	poles.remove(poles[0])
 	antennaIdx = 0
-	poles = list(Positions)
 
 	# Iterate as long as the problem isn't solved
 	solutionFound = 0
@@ -35,9 +36,12 @@ def search(Positions, k, c):
 			poles.remove(poles[closestPosition])
 
 	#Once we're done, we check to see if any optimisation can be done about the minimum length of each 'r'
+	cost = 0
 	for i in range(0, len(antennas)):
 		antennas[i].shrinkRange()
-		#antennas[i].printData()
+		antennas[i].printData()
+		cost += antennas[i].calculateCost()
+	print('Cost: ' + str(cost))
 
 def main():
 	#search([(10,10),(20,20),(30,0),(30,40),(50,40)],200,1)

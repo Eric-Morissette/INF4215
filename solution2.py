@@ -33,9 +33,12 @@ def search(Positions, k, c):
 			solutionFound = 1
 
 	#Once we're done, we check to see if any optimisation can be done about the minimum length of each 'r'
+	cost = 0
 	for i in range(0, len(antennas)):
 		antennas[i].shrinkRange()
-		#antennas[i].printData()
+		antennas[i].printData()
+		cost += antennas[i].calculateCost()
+	print('Cost: ' + str(cost))
 
 def main():
 	#search([(10,10),(20,20),(30,0),(30,40),(50,40)],200,1)
