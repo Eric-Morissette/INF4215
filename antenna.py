@@ -5,7 +5,7 @@ class Antenna:
 	def __init__(self, position, costPerAntenna, costPerDistance):
 		self.position = position
 		# Start rMax at the maximal "worth" distance and shrink later
-		self.rMax = math.sqrt(costPerAntenna / costPerDistance)
+		self.rMax = 1 + math.sqrt(costPerAntenna / costPerDistance)
 		self.k = costPerAntenna
 		self.c = costPerDistance
 		self.poles = []
@@ -48,7 +48,7 @@ class Antenna:
 		return (self.rMax + antenna.rMax) >= self.distanceTo(antenna.position)
 
 	#Fonction utile en fin de recherche afin de minimiser la taille des antennes tout en restant une solution valide
-	#utile puisqu'on place les antennes avec un rayon rMax, qui représente la distance optimale en terme de cout
+	#utile puisqu'on place les antennes avec un rayon rMax, qui represente la distance optimale en terme de cout
 	def shrinkRange(self):
 		tempRange = 1
 		for i in range(0, len(self.poles)):

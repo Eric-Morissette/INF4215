@@ -36,7 +36,7 @@ def search(Positions, k, c):
 		antennas[i].printData()
 
 def main():
-	search([(8,0),(0,0),(4,4)],100,4)
+	search([(10,10),(20,20),(30,0),(30,40),(50,40)],200,1)
 
 
 if __name__ == "__main__":
