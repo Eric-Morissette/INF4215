@@ -19,9 +19,10 @@ def search(Positions, k, c):
 			antennaI = antennas[i]
 			for j in range(i+1, len(antennas)):
 				antennaJ = antennas[j]
-				if antennaI.isOverlapping(antennaJ) and antennaI.distanceTo(antennaJ.position) <= minOverlapDist:
+				distanceIJ = antennaI.distanceTo(antennaJ.position)
+				if antennaI.isOverlapping(antennaJ) and distanceIJ <= minOverlapDist:
 					overlapping = [i, j]
-					minOverlapDist = antennaI.distanceTo(antennaJ.position)
+					minOverlapDist = distanceIJ
 
 		# Merge the two closest antennas, if they exist
 		if overlapping:
@@ -31,15 +32,15 @@ def search(Positions, k, c):
 		else:
 			solutionFound = 1
 
+	#Once we're done, we check to see if any optimisation can be done about the minimum length of each 'r'
 	for i in range(0, len(antennas)):
 		antennas[i].shrinkRange()
-		antennas[i].printData()
+		#antennas[i].printData()
 
 def main():
-	search([(10,10),(20,20),(30,0),(30,40),(50,40)],200,1)
+	#search([(10,10),(20,20),(30,0),(30,40),(50,40)],200,1)
+	search([(23,4),(43,43),(54,54),(54,94),(24,54),(54,52),(34,23),(76,76),(87,98),(98,9),(56,6),(53,4),(23,3),(45,3),(65,4),(7,8)], 200, 1)
 
 
 if __name__ == "__main__":
 	main()
-	
-
