@@ -1,15 +1,27 @@
 import solution1
 import solution2
 import time
+import random
 
-print('Solution1.py, 100 times:')
+nbPoles = 300
+rangePoles = 1000
+nbIterations = 2
+costConstant = 200
+costRange = 1
+
+polesList = []
+
+for i in range(0, nbPoles):
+	polesList.append((random.randint(0, rangePoles), random.randint(0, rangePoles)))
+
+print('Solution1.py, ' + str(nbIterations) + ' times:')
 t = time.time()
-for i in range(0, 100):
-	solution1.search([(23,4),(43,43),(54,54),(54,94),(24,54),(54,52),(34,23),(76,76),(87,98),(98,9),(56,6),(53,4),(23,3),(45,3),(65,4),(7,8)], 200, 1)
+for i in range(0, nbIterations):
+	solution1.search(list(polesList), costConstant, costRange)
 print(time.time() - t)
 
-print('Solution2.py, 100 times:')
+print('Solution2.py, ' + str(nbIterations) + ' times:')
 t = time.time()
-for i in range(0, 100):
-	solution2.search([(23,4),(43,43),(54,54),(54,94),(24,54),(54,52),(34,23),(76,76),(87,98),(98,9),(56,6),(53,4),(23,3),(45,3),(65,4),(7,8)], 200, 1)
+for i in range(0, nbIterations):
+	solution2.search(list(polesList), costConstant, costRange)
 print(time.time() - t)
