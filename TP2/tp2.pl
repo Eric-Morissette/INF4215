@@ -103,6 +103,13 @@ getPrerequis(Requis, Cours) :-
 		Requis = []
 	).
 
+getCorequis(Requis, Cours) :-
+	(corequis(X, Cours) ->
+		getListe(Requis, X)
+	;
+		Requis = []
+	).
+
 getListe(Liste, TempListe):-
 	(is_list(TempListe) ->
 		append([], TempListe, Liste)
@@ -115,11 +122,17 @@ validationChoixCours(Session, TempListeChoix, TempListeFaits):-
 	getListe(ListeFaits, TempListeFaits),
 	coursValides(ListeChoix),
 	coursValides(ListeFaits),
-	forall(member(X, ListeChoix), validationPrerequis(X, ListeFaits)).
+	forall(member(X, ListeChoix), validationPrerequis(X, ListeFaits)),
+	append(ListeFaits, ListeChoix, ListeComplete),
+	forall(member(X, ListeChoix), validationCorequis(X, ListeComplete)).
 
 validationPrerequis(Cours, ListeFaits):-
 	getPrerequis(Requis, Cours),
 	forall(member(X, Requis), checkDansListe(X, ListeFaits)).
+
+validationCorequis(Cours, ListeComplete):-
+	getCorequis(Requis, Cours),
+	forall(member(X, Requis), checkDansListe(X, ListeComplete)).
 
 checkDansListe(Cours, ListeFaits):-
 	member(Cours, ListeFaits).
