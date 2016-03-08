@@ -117,6 +117,9 @@ getListe(Liste, TempListe):-
 		Liste = [TempListe]
 	).
 
+getCreditsRequis(Credits, Cours):-
+	Credits = max(0, getCredits(Cours)).
+
 validationChoixCours(Session, TempListeChoix, TempListeFaits):-
 	getListe(ListeChoix, TempListeChoix),
 	getListe(ListeFaits, TempListeFaits),
@@ -124,7 +127,9 @@ validationChoixCours(Session, TempListeChoix, TempListeFaits):-
 	coursValides(ListeFaits),
 	forall(member(X, ListeChoix), validationPrerequis(X, ListeFaits)),
 	append(ListeFaits, ListeChoix, ListeComplete),
-	forall(member(X, ListeChoix), validationCorequis(X, ListeComplete)).
+	forall(member(X, ListeChoix), validationCorequis(X, ListeComplete)),
+	calculerCreditsFaits(NombreCreditsFaits, ListeFaits),
+	forall(member(X, ListeChoix), validationCreditsRequis(X, NombreCreditsFaits)).
 
 validationPrerequis(Cours, ListeFaits):-
 	getPrerequis(Requis, Cours),
@@ -133,6 +138,10 @@ validationPrerequis(Cours, ListeFaits):-
 validationCorequis(Cours, ListeComplete):-
 	getCorequis(Requis, Cours),
 	forall(member(X, Requis), checkDansListe(X, ListeComplete)).
+
+validationCreditsRequis(Cours, NombreCreditsFaits):-
+	getCreditsRequis(CreditsRequis, Cours)
+	NombreCreditsFaits > CreditsRequis.
 
 checkDansListe(Cours, ListeFaits):-
 	member(Cours, ListeFaits).
