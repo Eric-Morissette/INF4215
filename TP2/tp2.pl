@@ -198,5 +198,26 @@ checkDansListe(Cours, ListeFaits):-
 
 
 
+language(inf1005, cpp).
+language(inf1010, cpp).
+language(inf2010, java).
+language(inf1995, cpp).
+language(log1000, scala).
+
+getLanguage(Language):-
+	forall(language(X, Language), print(X)).
+
+
+
+inverse(inf3500).
+inverse(inf4215).
+
+getInverse(_):-
+	forall(inverse(X), print(X)).
+
+
+
+
+
 
 
