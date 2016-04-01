@@ -32,7 +32,11 @@ def showImage(img):
 def loadDataset():
     customPrint('Loading data...', False)
     with gzip.open('mnist.pkl.gz', 'rb') as f:
-        train, validate, test = pickle.load(f, encoding='latin1')
+        #Python3 needs "encoding='latin1'"
+        try:
+            train, validate, test = pickle.load(f, encoding='latin1')
+        except:
+            train, validate, test = pickle.load(f)
 
         def shared_dataset(data_xy, borrow=True):
 
