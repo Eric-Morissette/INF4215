@@ -115,73 +115,23 @@ class OutputLayer(object):
 
         # Initialize W as a matrix of zeros
         self.W = theano.shared( value = numpy.zeros((n_in, n_out),
-                    dtype = theano.config.floatX), name = 'W', borrow = True)
+                    dtype = theano.config.floatX ), name = 'W', borrow = True)
 
         # Initialize W as a vector of zeros
-        self.b = theano.shared(value = numpy.zeros((n_out,),
+        self.b = theano.shared( value = numpy.zeros((n_out,),
                     dtype = theano.config.floatX ), name = 'b', borrow = True)
 
-        # symbolic expression for computing the matrix of class-membership
-        # probabilities
-        # Where:
-        # W is a matrix where column-k represent the separation hyperplane for
-        # class-k
-        # x is a matrix where row-j  represents input training sample-j
-        # b is a vector where element-k represent the free parameter of
-        # hyperplane-k
+        # Probability of Y given X
         self.p_y_given_x = T.nnet.softmax(T.dot(input, self.W) + self.b)
-
-        # symbolic description of how to compute prediction as class whose
-        # probability is maximal
         self.y_pred = T.argmax(self.p_y_given_x, axis=1)
 
         # Combine W and B
         self.params = [self.W, self.b]
 
     def negative_log_likelihood(self, y):
-        """Return the mean of the negative log-likelihood of the prediction
-        of this model under a given target distribution.
-
-        .. math::
-
-            \frac{1}{|\mathcal{D}|} \mathcal{L} (\theta=\{W,b\}, \mathcal{D}) =
-            \frac{1}{|\mathcal{D}|} \sum_{i=0}^{|\mathcal{D}|}
-                \log(P(Y=y^{(i)}|x^{(i)}, W,b)) \\
-            \ell (\theta=\{W,b\}, \mathcal{D})
-
-        :type y: theano.tensor.TensorType
-        :param y: corresponds to a vector that gives for each example the
-                  correct label
-
-        Note: we use the mean instead of the sum so that
-              the learning rate is less dependent on the batch size
-        """
-        # start-snippet-2
-        # y.shape[0] is (symbolically) the number of rows in y, i.e.,
-        # number of examples (call it n) in the minibatch
-        # T.arange(y.shape[0]) is a symbolic vector which will contain
-        # [0,1,2,... n-1] T.log(self.p_y_given_x) is a matrix of
-        # Log-Probabilities (call it LP) with one row per example and
-        # one column per class LP[T.arange(y.shape[0]),y] is a vector
-        # v containing [LP[0,y[0]], LP[1,y[1]], LP[2,y[2]], ...,
-        # LP[n-1,y[n-1]]] and T.mean(LP[T.arange(y.shape[0]),y]) is
-        # the mean (across minibatch examples) of the elements in v,
-        # i.e., the mean log-likelihood across the minibatch.
         return -T.mean(T.log(self.p_y_given_x)[T.arange(y.shape[0]), y])
 
-
     def errors(self, y):
-        """Return a float representing the number of errors in the minibatch
-        over the total number of examples of the minibatch ; zero one
-        loss over the size of the minibatch
-
-        :type y: theano.tensor.TensorType
-        :param y: corresponds to a vector that gives for each example the
-                  correct label
-        """
-
-        # the T.neq operator returns a vector of 0s and 1s, where 1
-        # represents a mistake in prediction
         return T.mean(T.neq(self.y_pred, y))
 
 class NeuralNetwork(object):
@@ -281,14 +231,9 @@ def defaultNeuralNetwork():
     # Gradient Params
     gradParams = [T.grad(cost, param) for param in classifier.params]
 
-    # given two lists of the same length, A = [a1, a2, a3, a4] and
-    # B = [b1, b2, b3, b4], zip generates a list C of same size, where each
-    # element is a pair formed from the two lists :
-    #    C = [(a1, b1), (a2, b2), (a3, b3), (a4, b4)]
-    updates = [
-        (param, param - learning_rate * gradParam)
-        for param, gradParam in zip(classifier.params, gradParams)
-    ]
+    # Merge the lists together, if there are multiple
+    updates = [ (param, param - learning_rate * gradParam)
+        for param, gradParam in zip(classifier.params, gradParams) ]
 
     # Compile the Theano function responsible for updating the Neural Network
     train_model = theano.function(
@@ -305,82 +250,46 @@ def defaultNeuralNetwork():
     # Start the training
     customPrint('Training...', False)
 
-    # early-stopping parameters
-    patience = 10000  # look as this many examples regardless
-    patience_increase = 2  # wait this much longer when a new best is
-                           # found
-    improvement_threshold = 0.995  # a relative improvement of this much is
-                                   # considered significant
-    validation_frequency = min(n_train_batches, patience // 2)
-                                  # go through this many
-                                  # minibatche before checking the network
-                                  # on the validation set; in this case we
-                                  # check every epoch
-
     best_validation_loss = numpy.inf
     best_iter = 0
     test_score = 0.
 
-    epoch = 0
-    done_looping = False
-
-    while (epoch < n_epochs) and (not done_looping):
+    for epoch in range(n_epochs):
         epoch = epoch + 1
         for minibatch_index in range(n_train_batches):
 
             train_model(minibatch_index)
-            # iteration number
             iter = (epoch - 1) * n_train_batches + minibatch_index
 
-            if (iter + 1) % validation_frequency == 0:
-                # compute zero-one loss on validation set
+            if (iter + 1) % n_train_batches == 0:
                 validation_losses = [validate_model(i) for i
                                      in range(n_valid_batches)]
                 this_validation_loss = numpy.mean(validation_losses)
 
-                print(
-                    'epoch %i, minibatch %i/%i, validation error %f %%' %
-                    (
-                        epoch,
-                        minibatch_index + 1,
-                        n_train_batches,
-                        this_validation_loss * 100.
-                    )
-                )
+                customPrint('Validation Result: ' + this_validation_loss * 100.
+                    + ' obtained on iteration ' + (minibatch_index + 1)
+                    + ' at epoch ' + epoch, True)
 
-                # if we got the best validation score until now
+                # new best validation
                 if this_validation_loss < best_validation_loss:
-                    #improve patience if loss improvement is good enough
-                    if (
-                        this_validation_loss < best_validation_loss *
-                        improvement_threshold
-                    ):
-                        patience = max(patience, iter * patience_increase)
-
                     best_validation_loss = this_validation_loss
                     best_iter = iter
 
-                    # test it on the test set
+                    # test on the test set
                     test_losses = [test_model(i) for i
-                                   in range(n_test_batches)]
+                        in range(n_test_batches)]
                     test_score = numpy.mean(test_losses)
 
-                    print(('     epoch %i, minibatch %i/%i, test error of '
-                           'best model %f %%') %
-                          (epoch, minibatch_index + 1, n_train_batches,
-                           test_score * 100.))
-
-            if patience <= iter:
-                done_looping = True
-                break
+                    customPrint('New Best Validation at iteration '
+                        + minibatch_index + 1 + ' at epoch ' + epoch, True)
+                    customPrint('New Test Result: ' + test_score * 100., True)
 
     # Training is done
     customPrint('Done', True)
 
-    print(('Optimization complete. Best validation score of %f %% '
-           'obtained at iteration %i, with test performance %f %%') %
-          (best_validation_loss * 100., best_iter + 1, test_score * 100.))
-
+    customPrint('Best Validation: ' + best_validation_loss * 100., True)
+    customPrint(' -  Test Result: ' + test_score * 100., True)
+    customPrint(' - On iteration: ' + best_iter + 1, True)
 
 
 
