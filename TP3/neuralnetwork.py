@@ -4,9 +4,11 @@ Dataset: MNIST Data
 Inspired from: http://deeplearning.net/tutorial/mlp.html
 
 Eric Morissette (1631103)
-Sacha Licatese-Roussel (X)
+Sacha Licatese-Roussel (1635849)
 """
 
+# Draw
+import Tkinter as tk
 
 # Open/Parse the MNIST Data
 import gzip
@@ -134,6 +136,9 @@ class OutputLayer(object):
     def errors(self, y):
         return T.mean(T.neq(self.y_pred, y))
 
+    def check(self):
+        return self.p_y_given_x
+
 class NeuralNetwork(object):
     def __init__(self, input, n_in, n_hidden, n_out):
         """
@@ -177,15 +182,15 @@ class NeuralNetwork(object):
         # made out of
         self.params = self.hiddenLayer.params + self.outputLayer.params
 
-
+        self.check = self.outputLayer.check
 
 def defaultNeuralNetwork():
 
     # Default Parameters
-    learning_rate   = 0.004
+    learning_rate   = 0.01
     L1_coeff        = 0.00
     L2_coeff        = 0.0001
-    n_epochs        = 1000
+    n_epochs        = 1
     batch_size      = 100
     n_hidden        = 500
 
@@ -228,6 +233,17 @@ def defaultNeuralNetwork():
         }
     )
 
+    # User input test
+    img = T.matrix('img')
+    userInputTestTheano = theano.function(
+        inputs = [img], outputs = classifier.check(),
+        givens = {
+            x: img
+        }
+    )
+    def userInputTest(testImage):
+        return userInputTestTheano(testImg)[0]
+
     # Gradient Params
     gradParams = [T.grad(cost, param) for param in classifier.params]
 
@@ -255,9 +271,7 @@ def defaultNeuralNetwork():
     test_score = 0.
 
     for epoch in range(n_epochs):
-        epoch = epoch + 1
         for minibatch_index in range(n_train_batches):
-
             train_model(minibatch_index)
             iter = (epoch - 1) * n_train_batches + minibatch_index
 
@@ -266,9 +280,9 @@ def defaultNeuralNetwork():
                                      in range(n_valid_batches)]
                 this_validation_loss = numpy.mean(validation_losses)
 
-                customPrint('Validation Result: ' + this_validation_loss * 100.
-                    + ' obtained on iteration ' + (minibatch_index + 1)
-                    + ' at epoch ' + epoch, True)
+                customPrint('Validation Error Percentage: ' + str(this_validation_loss * 100.)
+                    + ' obtained on iteration ' + str(minibatch_index + 1)
+                    + ' at epoch ' + str(epoch), True)
 
                 # new best validation
                 if this_validation_loss < best_validation_loss:
@@ -281,17 +295,83 @@ def defaultNeuralNetwork():
                     test_score = numpy.mean(test_losses)
 
                     customPrint('New Best Validation at iteration '
-                        + minibatch_index + 1 + ' at epoch ' + epoch, True)
-                    customPrint('New Test Result: ' + test_score * 100., True)
+                        + str(minibatch_index + 1) + ' at epoch ' + str(epoch), True)
+                    customPrint('New Test Error Percentage: ' + str(test_score * 100.), True)
 
     # Training is done
     customPrint('Done', True)
 
-    customPrint('Best Validation: ' + best_validation_loss * 100., True)
-    customPrint(' -  Test Result: ' + test_score * 100., True)
-    customPrint(' - On iteration: ' + best_iter + 1, True)
+    customPrint('Best Validation: ' + str(best_validation_loss * 100.), True)
+    customPrint(' -  Test Result: ' + str(test_score * 100.), True)
+    customPrint(' - On iteration: ' + str(best_iter + 1), True)
+
+    root=tk.Tk()
+    root.wm_geometry("%dx%d+%d+%d" % (400, 400, 10, 10))
+    root.config(bg='white')
+    ImageGenerator(root,10,10)
+    root.mainloop()
 
 
+
+class ImageGenerator:
+    def __init__(self,parent,posx,posy,*kwargs):
+        self.parent = parent
+        self.posx = posx
+        self.posy = posy
+        self.sizex = 280
+        self.sizey = 280
+        self.b1 = "up"
+        self.xold = None
+        self.yold = None 
+        self.drawing_area=tk.Canvas(self.parent,width=self.sizex,height=self.sizey)
+        self.drawing_area.place(x=self.posx,y=self.posy)
+        self.drawing_area.bind("<Motion>", self.motion)
+        self.drawing_area.bind("<ButtonPress-1>", self.b1down)
+        self.drawing_area.bind("<ButtonRelease-1>", self.b1up)
+        self.button=tk.Button(self.parent,text="Submit",width=10,bg='white',command=self.submit)
+        self.button.place(x=self.sizex/7,y=self.sizey+20)
+        self.button1=tk.Button(self.parent,text="Clear",width=10,bg='white',command=self.clear)
+        self.button1.place(x=(self.sizex/7)+80,y=self.sizey+50)
+
+        self.pixelArray = numpy.ones((self.sizex, self.sizey))
+
+    def submit(self):
+        #make putin some poutine
+        tempArray = numpy.zeros((1, 28*28))
+        for i in range(0, self.sizex):
+            for j in range(0, self.sizey):
+                tempArray[0, ((j // 10) + (28 * (i // 10)))] += (1 - self.pixelArray[i, j])
+
+        tempArray /= 100.
+
+        ans = userInputTest(testImg)
+        for i in range(len(ans)):
+            print('Chance of ' + str(i) + ': ' + str(ans[i]))
+
+    def clear(self):
+        self.drawing_area.delete("all")
+        self.pixelArray = numpy.ones((self.sizex, self.sizey))
+
+    def b1down(self,event):
+        self.b1 = "down"
+
+    def b1up(self,event):
+        self.b1 = "up"
+        self.xold = None
+        self.yold = None
+
+    def motion(self,event):
+        if self.b1 == "down":
+            if self.xold is not None and self.yold is not None:
+                event.widget.create_line(self.xold,self.yold,event.x,event.y,smooth=True,width=7,fill='black')
+                if (event.x >= 1 and event.x < self.sizex - 1 and event.y >= 1 and event.y < self.sizey - 1):
+                    for i in range(-3, 4):
+                        for j in range(-3, 4):
+                            self.pixelArray[event.y + i, event.x + j] = 0
+        self.xold = event.x
+        self.yold = event.y
 
 if __name__ == '__main__':
     defaultNeuralNetwork()
+
+

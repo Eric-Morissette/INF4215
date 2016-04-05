@@ -1,55 +1,66 @@
-http://ubuntuforums.org/showthread.php?t=1084429
-#!/usr/bin/python
+import Tkinter as tk
+import numpy
+import sys
 
-from Tkinter import *
+class ImageGenerator:
+    def __init__(self,parent,posx,posy,*kwargs):
+        self.parent = parent
+        self.posx = posx
+        self.posy = posy
+        self.sizex = 280
+        self.sizey = 280
+        self.b1 = "up"
+        self.xold = None
+        self.yold = None 
+        self.drawing_area=tk.Canvas(self.parent,width=self.sizex,height=self.sizey)
+        self.drawing_area.place(x=self.posx,y=self.posy)
+        self.drawing_area.bind("<Motion>", self.motion)
+        self.drawing_area.bind("<ButtonPress-1>", self.b1down)
+        self.drawing_area.bind("<ButtonRelease-1>", self.b1up)
+        self.button=tk.Button(self.parent,text="Submit",width=10,bg='white',command=self.save)
+        self.button.place(x=self.sizex/7,y=self.sizey+20)
+        self.button1=tk.Button(self.parent,text="Clear",width=10,bg='white',command=self.clear)
+        self.button1.place(x=(self.sizex/7)+80,y=self.sizey+50)
 
-root = Tk()
+        self.pixelArray = numpy.ones((self.sizex, self.sizey))
 
-root.title("Simple Graph")
+    def save(self):
+        #make putin some poutine
+        tempArray = numpy.zeros((1, 28*28))
+        for i in range(0, self.sizex):
+            for j in range(0, self.sizey):
+                tempArray[0, ((j // 10) + (28 * (i // 10)))] += (1 - self.pixelArray[i, j])
 
-root.resizable(0,0)
+        tempArray /= 100.
+        return tempArray
 
-points = []
+    def clear(self):
+        self.drawing_area.delete("all")
+        self.pixelArray = numpy.ones((self.sizex, self.sizey))
 
-spline = 0
+    def b1down(self,event):
+        self.b1 = "down"
 
-tag1 = "theline"
+    def b1up(self,event):
+        self.b1 = "up"
+        self.xold = None
+        self.yold = None
 
-def point(event):
-	c.create_oval(event.x, event.y, event.x+1, event.y+1, fill="black")
-	points.append(event.x)
-	points.append(event.y)
-	return points
+    def motion(self,event):
+        if self.b1 == "down":
+            if self.xold is not None and self.yold is not None:
+                event.widget.create_line(self.xold,self.yold,event.x,event.y,smooth=True,width=7,fill='black')
+                if (event.x >= 1 and event.x < self.sizex - 1 and event.y >= 1 and event.y < self.sizey - 1):
+                    for i in range(-3, 4):
+                        for j in range(-3, 4):
+                            self.pixelArray[event.y + i, event.x + j] = 0
 
-def canxy(event):
-	print event.x, event.y
+        self.xold = event.x
+        self.yold = event.y
 
-def graph(event):
-	global theline
-	c.create_line(points, tags="theline")
-	
-
-def toggle(event):
-	global spline
-	if spline == 0:
-		c.itemconfigure(tag1, smooth=1)
-		spline = 1
-	elif spline == 1:
-		c.itemconfigure(tag1, smooth=0)
-		spline = 0
-	return spline
-
-
-c = Canvas(root, bg="white", width=300, height= 300)
-
-c.configure(cursor="crosshair")
-
-c.pack()
-
-c.bind("<Button-1>", point)
-
-c.bind("<Button-3>", graph)
-
-c.bind("<Button-2>", toggle)
-
-root.mainloop()
+if __name__ == "__main__":
+    root=tk.Tk()
+    root.wm_geometry("%dx%d+%d+%d" % (400, 400, 10, 10))
+    root.config(bg='white')
+    ImageGenerator(root,10,10)
+    root.mainloop()
